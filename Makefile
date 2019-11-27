@@ -1,3 +1,5 @@
+CFLAGS += -Wall -Wextra
+
 all: test
 
 test: main.o tagged_storage.o
