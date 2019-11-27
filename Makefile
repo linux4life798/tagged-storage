@@ -1,4 +1,5 @@
 CFLAGS += -Wall -Wextra
+CFLAGS += -ggdb
 
 all: test
 
