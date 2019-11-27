@@ -66,9 +66,15 @@ ts_entry_prev(ts_entry_header_t hdr) {
 	return (ts_entry_header_t)ptr;
 }
 
+
+static inline size_t
+ts_entry_space_total(struct ts *s) {
+	return s->storage_size - sizeof(struct  ts);
+}
+
 static inline size_t
 ts_entry_space_available(struct ts *s) {
-	return (s->storage_size - sizeof(struct  ts)) - s->entries_size;
+	return ts_entry_space_total(s) - s->entries_size;
 }
 
 static inline size_t
@@ -92,7 +98,7 @@ ts_valid_version(struct ts *s) {
 
 static inline int
 ts_valid_sizes(struct ts *s) {
-	return s->entries_size <= (s->storage_size - sizeof(struct  ts));
+	return s->entries_size <= ts_entry_space_total(s);
 }
 
 static inline int
