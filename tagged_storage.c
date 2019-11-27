@@ -92,7 +92,7 @@ ts_valid_version(struct ts *s) {
 
 static inline int
 ts_valid_sizes(struct ts *s) {
-	return s->entries_size <= ts_entry_space_available(s);
+	return s->entries_size <= (s->storage_size - sizeof(struct  ts));
 }
 
 static inline int
@@ -103,11 +103,12 @@ ts_valid_ptr_data(struct ts *s, void *data) {
 
 static inline int
 ts_valid_ptr_hdr(struct ts *s, ts_entry_header_t hdr) {
-	return ts_valid_ptr_data(s, hdr);
+	return (s->entries <= (uint8_t *)hdr)
+		&& (uint8_t *)hdr < (s->entries + s->entries_size);
 }
 
 static inline int
-ts_valid_entry(struct ts *s, ts_entry_header_t hdr) {
+ts_valid_entry(ts_entry_header_t hdr) {
 	return hdr->data_size == ts_entry_footer(hdr)->data_size;
 }
 
@@ -117,7 +118,7 @@ ts_valid_entry(struct ts *s, ts_entry_header_t hdr) {
 void ts_init(struct ts *s, size_t storage_size) {
 	assert(s);
 
-	if (!ts_consistent(s)) {
+	if (!ts_consistent(s, storage_size)) {
 		ts_clean(s);
 	}
 }
@@ -147,16 +148,18 @@ void *ts_append(struct ts *s, ts_tag_t tag, ts_ver_t version, size_t data_size) 
 	assert(ts_valid_sizes(s));
 	assert(ts_valid_ptr_hdr(s, hdr));
 	assert(ts_valid_ptr_data(s, hdr->data));
-	assert(ts_valid_entry(s, hdr));
+	assert(ts_valid_entry(hdr));
 	return hdr->data;
 }
 
-void *ts_resize(struct ts *s, void *data, size_t size) {
+void *ts_resize(struct ts *s, void *data, size_t data_size) {
 	assert(s);
 	assert(ts_valid_magic(s));
 	assert(ts_valid_version(s));
 	assert(ts_valid_sizes(s));
 	assert(ts_valid_ptr_data(s, data));
+
+	data_size = data_size;
 
 	assert(0); /* Unimplemented */
 
@@ -187,6 +190,12 @@ void *ts_find_next(struct ts *s, ts_tag_t tag, void *data_start,
 
 	for (; ts_valid_ptr_hdr(s, hdr); hdr = ts_entry_next(hdr)) {
 		if (hdr->tag == tag) {
+			if (version) {
+				*version = hdr->version;
+			}
+			if(data_size) {
+				*data_size = hdr->data_size;
+			}
 			return hdr->data;
 		}
 	}
@@ -210,14 +219,14 @@ void ts_reset(struct ts *s, size_t storage_size) {
 	assert(ts_valid_sizes(s));
 }
 
-bool ts_consistent(struct ts *s) {
+bool ts_consistent(struct ts *s, size_t storage_size) {
 	assert(s);
+	assert(storage_size);
 
 	/* Order In Which We Validate
 	 * * Honor the struct ts's entries size
 	 * * An entry is good if both header and footer agree
 	 */
-
 	assert(0); /* Unimplemented */
 }
 
@@ -226,7 +235,7 @@ void ts_clean(struct ts *s) {
 
 	void *data = NULL;
 
-	while (data = ts_find_next(s, ts_tag_invalid, data, NULL, NULL)) {
+	while ((data = ts_find_next(s, ts_tag_invalid, data, NULL, NULL))) {
 		ts_remove(s, data);
 	}
 }

@@ -53,7 +53,7 @@ void *ts_append(struct ts *s, ts_tag_t tag, ts_ver_t version, size_t data_size);
  *
  * @return void* NULL if resize is too large, pointer to data otherwise
  */
-void *ts_resize(struct ts *s, void *data, size_t size);
+void *ts_resize(struct ts *s, void *data, size_t data_size);
 
 /**
  * @brief Remove a record without invalidation/cleanup
@@ -103,7 +103,7 @@ void ts_reset(struct ts *s, size_t storage_size);
  * @return true The storage unit was already consistent
  * @return false The storage unit required correcting
  */
-bool ts_consistent(struct ts *s);
+bool ts_consistent(struct ts *s, size_t storage_size);
 
 /**
  * @brief Removes invalid records
