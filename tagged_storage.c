@@ -6,6 +6,11 @@
 #include <stdint.h>
 #include <string.h>
 
+/* TODO:
+ *
+ * - Ensure 4 or 8 byte alignment of regions
+ */
+
 static const int ts_magic = 0x54616753; /* "TagS" */
 static const ts_ver_t ts_version = 0;
 static const ts_tag_t ts_tag_invalid = 0;
